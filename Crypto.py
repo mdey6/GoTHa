@@ -31,7 +31,8 @@ class CipherSuite(object):
     					 			 salt = b'4\xe8\xf3W\xbb\x8e\xbe\xe8\xebl\x1f&\xf4T\x1b\xe2', 
     					 			 iterations = 100000,  backend = default_backend())
 		key  			= base64.urlsafe_b64encode(keyDerivator.derive(inKey))
-		self.fernet 	= Fernet(key)
+		# https://github.com/fernet/spec/blob/master/Spec.md
+		self.fernet 	= Fernet(key)	# AES-128 CBC, HMAC-256
 
 	def encrypt(self, inBytes):
 		return self.fernet.encrypt(inBytes)
