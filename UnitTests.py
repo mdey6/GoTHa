@@ -11,6 +11,6 @@ import unittest, random
 import Crypto, Tar, Riddler
 
 if __name__ == '__main__':
-	random.seed()
-	testsuite = unittest.TestLoader().discover('.', pattern = '*.py')
-	unittest.TextTestRunner(verbosity=1).run(testsuite)
+    random.seed()
+    testsuite = unittest.TestLoader().discover('.', pattern = '*.py')
+    unittest.TextTestRunner(verbosity=1).run(testsuite)
