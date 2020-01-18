@@ -3,7 +3,7 @@
 
 #########################################################################################################################
 # Created on 01/15/2020 by Virag Doshi
-# Copyright © 2020 Virag Doshi
+# Copyrigh?nt © 2020 Virag Doshi
 #
 #########################################################################################################################
 
@@ -17,13 +17,13 @@ import unittest, random
 
 # The answer to nth puzzle:                 a(n)
 # The files for the nth puzzle:             f(n)
-# The hint for the nth puzzle:              ht(n)
+# The pepper for the nth puzzle:            h?nt(n)
 # The key to the nth puzzle:                k(n) = hash(data = a(n-1), salt = ''), k(1) = 0 (Initial key)
-# The salt for the nth puzzle:              s(n) = encrypt(key = k(n), data = ht(n))
+# The salt for the nth puzzle:              s(n) = encrypt(key = k(n), data = h?nt(n))
 # The digest of a(n):                       h(n) = hash(data = a(n), salt = s(n))
 # The encrypted files for the nth puzzle:   ef(n) = encrypt(key = k(n), data = f(n))
 
-# f(n), a(n), ht(n), k(n) -> ef(n), s(n), h(n), k(n+1)
+# f(n), a(n), h?nt(n), k(n) -> ef(n), s(n), h(n), k(n+1)
 
 
 def _getKey(inPrevAns = None):
@@ -50,15 +50,14 @@ class Riddler(object):
         
         self.encryptor  = CipherSuite(_getKey(inKey))
 
-        pepper          = inLevelDict['hint'] if 'hint' in inLevelDict else ''
+        pepper          = inLevelDict['pepper'] if 'pepper' in inLevelDict else ''
 
         assert (len(pepper) <= 128), "pepper too long"
 
         pepper          = pepper + os.urandom(128 - len(pepper))
         salt            = self.encryptor.encrypt(pepper)
         self.nextKey    = _getKey(answer)
-        self.dict       = { 'level' : str(inLevel), 
-                            'salt' : base64.urlsafe_b64encode(salt), 
+        self.dict       = { 'salt' : base64.urlsafe_b64encode(salt), 
                             'digest' : base64.urlsafe_b64encode(_getDigest(answer, salt)) }
         
     def getNextKey(self):
@@ -70,6 +69,7 @@ class Riddler(object):
     def encryptFiles(self):
         Tar.tarDir(self.dir, self.tarFile)
         self.encryptor.encryptFile(self.tarFile, self.outFile)
+        os.remove(self.tarFile)
 
     def getEncDict(self):
         return self.dict
@@ -108,6 +108,7 @@ class Solver(object):
     def decryptNextFiles(self, inAns):
         CipherSuite(_getKey(inAns)).decryptFiles(self.file, self.tarFile)
         Tar.untar(self.tarFile, self.outDir)
+        os.remove(self.tarFile)
         
 
 
@@ -136,10 +137,10 @@ class _RiddlerSolverTests(unittest.TestCase):
 
         randomAns       = os.urandom(32)
         randomPepper    = os.urandom(32)
-        r = Riddler(1, {'ans' : randomAns, 'hint' : randomPepper})
+        r = Riddler(1, {'ans' : randomAns, 'pepper' : randomPepper})
         self.assertEqual(r.getNextKey(), _getKey(randomAns))
         d = r.getEncDict()
-        self.assertEqual('1', d['level'])
+
         salt = Solver.decryptSalt(base64.urlsafe_b64decode(d['salt']))
         self.assertTrue(randomPepper in salt)
         self.assertTrue(len(salt), 128)
@@ -147,7 +148,7 @@ class _RiddlerSolverTests(unittest.TestCase):
         self.assertEqual(digest, _getDigest(randomAns, base64.urlsafe_b64decode(d['salt'])))
 
         randomPepper    = os.urandom(128)
-        r = Riddler(1, {'ans' : randomAns, 'hint' : randomPepper})
+        r = Riddler(1, {'ans' : randomAns, 'pepper' : randomPepper})
         d = r.getEncDict()
         salt = Solver.decryptSalt(base64.urlsafe_b64decode(d['salt']))
         self.assertEqual(randomPepper, salt)
@@ -156,10 +157,10 @@ class _RiddlerSolverTests(unittest.TestCase):
         randomPepper    = os.urandom(32)
         level           = random.randint(2, 10)
         key             = os.urandom(32)
-        r = Riddler(level, {'ans' : randomAns, 'hint' : randomPepper}, key)
+        r = Riddler(level, {'ans' : randomAns, 'pepper' : randomPepper}, key)
         self.assertEqual(r.getNextKey(), _getKey(randomAns))
         d = r.getEncDict()
-        self.assertEqual(str(level), d['level'])
+        
         salt = Solver.decryptSalt(base64.urlsafe_b64decode(d['salt']), key)
         self.assertTrue(randomPepper in salt)
         self.assertTrue(len(salt), 128)
@@ -184,7 +185,7 @@ class _RiddlerSolverTests(unittest.TestCase):
         randomsalt      = os.urandom(128)
         salt = base64.urlsafe_b64encode(randomsalt)
         digest = base64.urlsafe_b64encode(_getDigest(randomAns, randomsalt))
-        s = Solver(2, {'level' : '2', 'salt' : salt, 'digest' : digest})
+        s = Solver(2, {'salt' : salt, 'digest' : digest})
         self.assertFalse(s.isAnswerCorrect(os.urandom(32)))
         self.assertTrue(s.isAnswerCorrect(randomAns))
 
@@ -194,7 +195,7 @@ class _RiddlerSolverTests(unittest.TestCase):
         level           = 1
         key             = None
 
-        r = Riddler(level, {'ans' : randomAns, 'hint' : randomPepper}, key)
+        r = Riddler(level, {'ans' : randomAns, 'pepper' : randomPepper}, key)
         s = Solver(level, r.getEncDict())
 
         self.assertEqual(r.dir, s.outDir)
@@ -209,7 +210,7 @@ class _RiddlerSolverTests(unittest.TestCase):
         level           = random.randint(2, 10)
         key             = os.urandom(32)
 
-        r = Riddler(level, {'ans' : randomAns, 'hint' : randomPepper}, key)
+        r = Riddler(level, {'ans' : randomAns, 'pepper' : randomPepper}, key)
         s = Solver(level, r.getEncDict())
 
         self.assertEqual(r.dir, s.outDir)
