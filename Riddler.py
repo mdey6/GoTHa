@@ -34,23 +34,26 @@ def _getDigest(inAns, inSalt):
 
 
 class Riddler(object):
+    inputDir            = '.'
+    intermediateDir     = '/tmp'
+    outputDir           = '.'
+
     def __init__(self, inLevel, inLevelDict, inKey = None):
         assert ('ans' in inLevelDict), "No answer found for the puzzle"
         assert (inLevel > 0), "Level must be greater than 0"
         assert ((inKey is None) is (inLevel is 1)),  ("Key cannot be 0 for level higher than 1" if inLevel is 1 
                                                       else "Key cannot be 0 for level higher than 1")
 
-        answer          = inLevelDict['ans']
+        answer          = str(inLevelDict['ans'])
 
         name            = str(inLevel + 1)
-
-        self.dir        = name
-        self.tarFile    = name + '.tgz'
-        self.outFile    = name + '.enctgz'
+        self.dir        = Riddler.inputDir + '/' + name
+        self.tarFile    = Riddler.intermediateDir + '/' + name + '.tgz'
+        self.outFile    = Riddler.outputDir + '/' + '.enctgz'
         
         self.encryptor  = CipherSuite(_getKey(inKey))
 
-        pepper          = inLevelDict['pepper'] if 'pepper' in inLevelDict else ''
+        pepper          = str(inLevelDict['pepper']) if 'pepper' in inLevelDict else ''
 
         assert (len(pepper) <= 128), "pepper too long"
 
@@ -66,7 +69,7 @@ class Riddler(object):
     def getInputDirName(self):
         return self.dir
 
-    def encryptFiles(self):
+    def encryptNextFiles(self):
         Tar.tarDir(self.dir, self.tarFile)
         self.encryptor.encryptFile(self.tarFile, self.outFile)
         os.remove(self.tarFile)
@@ -76,22 +79,26 @@ class Riddler(object):
 
 
 class Solver(object):
+    inputDir            = '.'
+    intermediateDir     = '/tmp'
+    outputDir           = '.'
+
     def __init__(self, inLevel, inLevelDict):
         assert ('salt' in inLevelDict), "No salt found"
         assert ('digest' in inLevelDict), "No digest found"
         assert (inLevel > 0), "Level must be greater than 0"
 
         name            = str(inLevel + 1)
-        self.encFile    = name + '.enctgz'
-        self.tarFile    = name + '.tgz'
-        self.outDir     = name
+        self.encFile    = Riddler.inputDir + '/' + name + '.enctgz'
+        self.tarFile    = Riddler.intermediateDir + '/' + name + '.tgz'
+        self.outDir     = Riddler.outputDir + '/' + name
 
         try:
-            self.digest     = base64.urlsafe_b64decode(inLevelDict['digest'])
+            self.digest     = base64.urlsafe_b64decode(str(inLevelDict['digest']))
         except TypeError:
             assert False, "Incorrect digest"
         try:
-            self.salt       = base64.urlsafe_b64decode(inLevelDict['salt'])
+            self.salt       = base64.urlsafe_b64decode(str(inLevelDict['salt']))
         except TypeError:
             assert False, "Incorrect salt"
 
@@ -160,7 +167,7 @@ class _RiddlerSolverTests(unittest.TestCase):
         r = Riddler(level, {'ans' : randomAns, 'pepper' : randomPepper}, key)
         self.assertEqual(r.getNextKey(), _getKey(randomAns))
         d = r.getEncDict()
-        
+
         salt = Solver.decryptSalt(base64.urlsafe_b64decode(d['salt']), key)
         self.assertTrue(randomPepper in salt)
         self.assertTrue(len(salt), 128)
