@@ -12,6 +12,7 @@ import os
 import base64
 from Crypto import *
 from Tar import *
+import Printer
 import unittest, random
 
 
@@ -47,9 +48,9 @@ class Riddler(object):
         answer          = str(inLevelDict['ans'])
 
         name            = str(inLevel + 1)
-        self.dir        = Riddler.inputDir + '/' + name
-        self.tarFile    = Riddler.intermediateDir + '/' + name + '.tgz'
-        self.outFile    = Riddler.outputDir + '/' + '.enctgz'
+        self.dir        = os.path.join(Riddler.inputDir, name)
+        self.tarFile    = os.path.join(Riddler.intermediateDir, name + '.tgz')
+        self.outFile    = os.path.join(Riddler.outputDir, name + '.enctgz')
         
         self.encryptor  = CipherSuite(_getKey(inKey))
 
@@ -66,11 +67,11 @@ class Riddler(object):
     def getNextKey(self):
         return self.nextKey
 
-    def getInputDirName(self):
-        return self.dir
-
     def encryptNextFiles(self):
+        Printer.verbosePrinter('tar ' + self.dir + ' -> ' + self.tarFile)
         Tar.tarDir(self.dir, self.tarFile)
+        Printer.verbosePrinter('enc ' + self.tarFile + ' -> ' + self.outFile + ' with key ' + \
+                                base64.urlsafe_b64encode(self.getNextKey()))
         self.encryptor.encryptFile(self.tarFile, self.outFile)
         os.remove(self.tarFile)
 
@@ -89,9 +90,10 @@ class Solver(object):
         assert (inLevel > 0), "Level must be greater than 0"
 
         name            = str(inLevel + 1)
-        self.encFile    = Riddler.inputDir + '/' + name + '.enctgz'
-        self.tarFile    = Riddler.intermediateDir + '/' + name + '.tgz'
-        self.outDir     = Riddler.outputDir + '/' + name
+        
+        self.encFile    = os.path.join(Riddler.inputDir, name + '.enctgz')
+        self.tarFile    = os.path.join(Riddler.intermediateDir, name + '.tgz')
+        self.outDir     = os.path.join(Riddler.outputDir, name)
 
         try:
             self.digest     = base64.urlsafe_b64decode(str(inLevelDict['digest']))
@@ -106,14 +108,14 @@ class Solver(object):
     def decryptSalt(inSalt, inPrevAns = None):
         return CipherSuite(_getKey(inPrevAns)).decrypt(inSalt)
 
-    def getInputFileName(self):
-        return self.encFile
-
     def isAnswerCorrect(self, inAns):
         return (self.digest == _getDigest(inAns, self.salt))
 
     def decryptNextFiles(self, inAns):
+        Printer.verbosePrinter('dec ' + self.file + ' -> ' + self.tarFile + ' with key ' + \
+                                base64.urlsafe_b64encode(self.getNextKey()))
         CipherSuite(_getKey(inAns)).decryptFiles(self.file, self.tarFile)
+        Printer.verbosePrinter('untar ' + self.tarFile + ' -> ' + self.outDir)
         Tar.untar(self.tarFile, self.outDir)
         os.remove(self.tarFile)
         
