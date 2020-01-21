@@ -1,10 +1,10 @@
 # GoTHa: Gota group's Treasure Hunt
 
-Good. This means you were able to crack the first and probably the most difficult puzzle: the QR code. As per the instructions in note accompanying the gifts, hopefully you haven't opened the envelopes yet.
+Good. This means you were able to crack the first and probably the most difficult puzzle: the QR code. As per the instructions in the note accompanying the gifts, hopefully you haven't opened the envelopes yet.
 
 For your ease, a short video that explains GoTHa can be found [here](https://www.youtube.com/watch?v=dQw4w9WgXcQ). But if you really want to read, here you go:
 
-As you may have correctly guessed by this point, you will have to solve a number of puzzles to open them. There are eight puzzles for each of the eight envelopes. After solving puzzle number n, you may open the nth envelope.
+As you may have correctly guessed by this point, you will have to solve a number of puzzles to open the envelopes. There are eight puzzles for the eight envelopes. After solving puzzle number n, you may open the nth envelope.
 
 Only when you submit to the script the correct answer to the current puzzle, will the question for the next one appear.
 
@@ -16,9 +16,9 @@ We are relying on your honesty to make sure that you follow these instructions. 
 1. Do not open the envelopes before solving the corresponding puzzles.
 2. The code does not perform a string compare to figure out if the answer is correct. That is to say that the code does not contain the answers. As a result, you are free to read and understand any and all of the code. In fact, you are encouraged to do so. You may find some interesting information that way.
 3. You may also explore all the contents of all the directories in this repository.
-4. Exploring the git history is also a permisable action.
-5. Hacking the scripts to find a way around them is fair game. It is our hope that such a way does not exist.
-6. There may be puzzles that require you to do some coding or at least using a computer.
+4. Exploring the git history is also a permissible action.
+5. Hacking the scripts to find a way around them is also fair game.
+6. There may be puzzles that require you to do some coding or at least use a computer to solve them.
 7. Using a search engine is allowed.
 8. Please do not alter the contents of the folder `resources/data`. Doing so may render the scripts inoperable.
 9. The unlocked puzzles can be found in `resources/puzzles` in a directory named with the level number.
