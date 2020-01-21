@@ -15,6 +15,7 @@ import os
 import Printer
 import shutil
 import re
+import base64
 from Riddler import *
 
 
@@ -48,7 +49,7 @@ Best of luck!
 How to use this script:
 """
 
-def create(createInputDir, encDir):
+def create(createInputDir, encDir, decDir):
     with open(os.path.join(createInputDir, 'input.json'),'r') as fIn:
         inputDict = json.loads(fIn.read())
 
@@ -58,12 +59,12 @@ def create(createInputDir, encDir):
 
     assert ('1' in inputDict), "First level not found"
 
-    print "Copying level 1 files to data"
+    print "Copying level 1 files to puzzles"
 
-    if os.path.exists(os.path.join(encDir, '1')):
-        shutil.rmtree(encDir)
+    if os.path.exists(os.path.join(decDir, '1')):
+        shutil.rmtree(os.path.join(decDir, '1'))
 
-    shutil.copytree(os.path.join(createInputDir, '1'), os.path.join(encDir, '1'))
+    shutil.copytree(os.path.join(createInputDir, '1'), os.path.join(decDir, '1'))
 
     while 1:
         print "Found level " + str(level) + \
@@ -103,10 +104,32 @@ def solve(inLevel, inAnswer, encDir, decDir):
         print "Incorrect answer given"
         exit(-1)
 
-    print "Decrypting level " + str(inLevel + 1) + " files"
-    print "Resulting files can be found at " + s.outDir
+    if str(inLevel + 1) not in inputDict:
+        print "Congrats! You have solved all the puzzles"
+        return
 
     solver.decryptNextFiles(inAnswer)
+
+    print "Decrypting level " + str(inLevel + 1) + " files"
+    print "Resulting files can be found at " + solver.outDir
+
+
+def saltDecryptor(inLevel, inPrevAnswer, encDir):
+    with open(os.path.join(encDir, 'enc.json'),'r') as fIn:
+        inputDict = json.loads(fIn.read())
+
+    if str(inLevel) not in inputDict:
+        print "No such level found"
+        exit(-1)
+
+    print "Found level " + str(inLevel) + \
+               Printer.verboseAddition(": " + str(inputDict[str(inLevel)]))
+
+    print "Decrypting salt for level " + str(inLevel)
+    salt    = base64.urlsafe_b64decode(str(inputDict[str(inLevel)]['salt']))
+    pepper  = Solver.decryptSalt(salt, None if inLevel is 1 else inPrevAnswer)
+
+    print "Pepper found: " + pepper
 
 
 def main():
@@ -141,25 +164,30 @@ def main():
         print parser.print_help()
         exit(0)
 
-    if args.action not in ['solve', 'create']:
+    if args.action not in ['solve', 'create', 'pepper']:
         print "Invalid action"
         print parser.print_help(sys.stderr)
         exit(-1)
 
-    if args.action == 'solve':
+    if args.action == 'solve' or args.action == 'pepper':
         try:
             level = int(args.level)
         except (TypeError, ValueError) as e:
             print "Invalid level"
             print parser.print_help(sys.stderr)
             exit(-1)
-        if args.answer is None:
+        if (args.answer is None) and \
+            ((args.action == 'solve') or \
+             (args.action == 'pepper' and level is not 1)):
             print "No answer given"
             print parser.print_help(sys.stderr)
             exit(-1)
         answer = re.sub('[^A-Za-z0-9]+', '', str(args.answer))
 
-        solve(level, answer, encDir, decDir)
+        if args.action == 'solve':
+            solve(level, answer, encDir, decDir)
+        else:
+            saltDecryptor(level, answer, encDir)
 
     if args.action == 'create':
         if args.level is not None:
@@ -167,7 +195,7 @@ def main():
             print parser.print_help(sys.stderr)
             exit(-1)
 
-        create(createInputDir, encDir)
+        create(createInputDir, encDir, decDir)
 
 
 if __name__ == '__main__':
