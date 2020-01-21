@@ -10,6 +10,7 @@
 import json
 import os
 import base64
+import re
 from Crypto import *
 from Tar import *
 import Printer
@@ -45,21 +46,19 @@ class Riddler(object):
         assert ((inKey is None) is (inLevel is 1)),  ("Key cannot be 0 for level higher than 1" if inLevel is 1 
                                                       else "Key cannot be 0 for level higher than 1")
 
-        answer          = str(inLevelDict['ans'])
+        answer          = re.sub('[^A-Za-z0-9]+', '', str(inLevelDict['ans']))
 
         name            = str(inLevel + 1)
         self.dir        = os.path.join(Riddler.inputDir, name)
         self.tarFile    = os.path.join(Riddler.intermediateDir, name + '.tgz')
         self.outFile    = os.path.join(Riddler.outputDir, name + '.enctgz')
-        
-        self.encryptor  = CipherSuite(_getKey(inKey))
 
         pepper          = str(inLevelDict['pepper']) if 'pepper' in inLevelDict else ''
 
         assert (len(pepper) <= 128), "pepper too long"
 
         pepper          = pepper + os.urandom(128 - len(pepper))
-        salt            = self.encryptor.encrypt(pepper)
+        salt            = CipherSuite(_getKey(inKey)).encrypt(pepper)
         self.nextKey    = _getKey(answer)
         self.dict       = { 'salt' : base64.urlsafe_b64encode(salt), 
                             'digest' : base64.urlsafe_b64encode(_getDigest(answer, salt)) }
@@ -72,7 +71,7 @@ class Riddler(object):
         Tar.tarDir(self.dir, self.tarFile)
         Printer.verbosePrinter('enc ' + self.tarFile + ' -> ' + self.outFile + ' with key ' + \
                                 base64.urlsafe_b64encode(self.getNextKey()))
-        self.encryptor.encryptFile(self.tarFile, self.outFile)
+        CipherSuite(self.getNextKey()).encryptFile(self.tarFile, self.outFile)
         os.remove(self.tarFile)
 
     def getEncDict(self):
@@ -90,10 +89,10 @@ class Solver(object):
         assert (inLevel > 0), "Level must be greater than 0"
 
         name            = str(inLevel + 1)
-        
-        self.encFile    = os.path.join(Riddler.inputDir, name + '.enctgz')
-        self.tarFile    = os.path.join(Riddler.intermediateDir, name + '.tgz')
-        self.outDir     = os.path.join(Riddler.outputDir, name)
+
+        self.encFile    = os.path.join(Solver.inputDir, name + '.enctgz')
+        self.tarFile    = os.path.join(Solver.intermediateDir, name + '.tgz')
+        self.outDir     = os.path.join(Solver.outputDir, name)
 
         try:
             self.digest     = base64.urlsafe_b64decode(str(inLevelDict['digest']))
@@ -112,9 +111,9 @@ class Solver(object):
         return (self.digest == _getDigest(inAns, self.salt))
 
     def decryptNextFiles(self, inAns):
-        Printer.verbosePrinter('dec ' + self.file + ' -> ' + self.tarFile + ' with key ' + \
-                                base64.urlsafe_b64encode(self.getNextKey()))
-        CipherSuite(_getKey(inAns)).decryptFiles(self.file, self.tarFile)
+        Printer.verbosePrinter('dec ' + self.encFile + ' -> ' + self.tarFile + ' with key ' + \
+                                base64.urlsafe_b64encode(_getKey(inAns)))
+        CipherSuite(_getKey(inAns)).decryptFile(self.encFile, self.tarFile)
         Printer.verbosePrinter('untar ' + self.tarFile + ' -> ' + self.outDir)
         Tar.untar(self.tarFile, self.outDir)
         os.remove(self.tarFile)
