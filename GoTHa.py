@@ -19,6 +19,7 @@ from Riddler import *
 
 
 welcomeString = """
+GoTHa: Gota group's Treasure Hunt
  ______________________
 < Hi, welcome to GoTHa >
  ----------------------
@@ -28,11 +29,23 @@ welcomeString = """
                 ||----w |
                 ||     ||
 
-GoTHa: Gota group's Treasure Hunt
+There are a few locked puzzles in this repo. To open the envelopes that contain your gifts, \
+you will have to solve them. This script is the key to verify if the answers you come up with \
+for the puzzles are right or wrong.
 
-<Description and instructions>
+There is one puzzle each for each of the eight envelopes. After solving puzzle number n, you may \
+open the nth envelope. Only when you submit to the script the correct answer to the current puzzle, \
+will the question for the next one appear.
 
-How to use this script
+Note:
+* Please do not alter the contents of the folder resources/data. Doing so may render the scripts \
+inoperable. 
+* The unlocked puzzles can be found in resources/puzzles in a directory named with the level number.
+
+When you are ready, head over to resources/puzzles and find the first puzzle to get started. \
+Best of luck!
+
+How to use this script:
 """
 
 def create(createInputDir, encDir):
@@ -91,6 +104,7 @@ def solve(inLevel, inAnswer, encDir, decDir):
         exit(-1)
 
     print "Decrypting level " + str(inLevel + 1) + " files"
+    print "Resulting files can be found at " + s.outDir
 
     solver.decryptNextFiles(inAnswer)
 
@@ -111,9 +125,10 @@ def main():
 
     Printer.isVerbose = args.verbose
 
-    createInputDir      = 'inputs'
-    encDir              = 'data'
-    decDir              = 'puzzles'
+    resourceDir         = 'resources'
+    createInputDir      = os.path.join(resourceDir, 'inputs')
+    encDir              = os.path.join(resourceDir, 'data')
+    decDir              = os.path.join(resourceDir, 'puzzles')
 
     Riddler.inputDir    = createInputDir
     Riddler.outputDir   = encDir

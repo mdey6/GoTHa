@@ -1,6 +1,7 @@
 # This application
-inputs/
-puzzles/
+resources/inputs/
+resources/puzzles/*
+!resources/puzzles/1
 
 # Python
 __pycache__/
